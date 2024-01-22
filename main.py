@@ -11,14 +11,16 @@ def newInvoice():
         amount=int(amount)
     except:
         return print("This is not number")
-    date = datetime.now()
+    date = input("Enter date (%d-%m-%Y): ")
+    isDateCorrect = isValidDate(date)
+    if(isDateCorrect == False):
+        return print("Unvalid date type. Enter date with (%d-%m-%Y) type")
     currency = input("Currency(PLN,USD,EUR,GBP):")
     if(currency !="PLN" and currency !="USD" and currency !="GBP" and currency !="EUR"):
         return print("Unvalid currency (PLN,USD,GBP,EUR)")
-    formattedDate = date.strftime("%d-%m-%Y")
     currentInvoice = {
         "amount": amount,
-        "date": formattedDate,
+        "date": date,
         "currency": currency,
         "toPay": amount,
         "id": str(uuid.uuid4())
@@ -33,17 +35,37 @@ def newPayment(invoice):
     print("Payment")
     print("Choosen invoice: " + invoice["id"] )
     amount = input("Amount:")
+    basicAmount = amount
     try:
         amount = int(amount)
     except:
         return print("This is not number")
     date = datetime.now()
     currency = input("Currency(PLN,USD,EUR,GBP):")
+
     if(currency !="PLN" and currency != "GBP" and currency !="EUR" and currency !="USD"):
         return print("Unvalid currency (PLN,USD,GBP,EUR)")
     formattedDate = date.strftime("%d-%m-%Y")
+    invoiceCurrency = invoice['currency']
+    exchangeRate = getExchangeRateFromToday(invoiceCurrency)
+    if(currency != invoiceCurrency):
+        if(currency == 'PLN'):
+            amount /= exchangeRate
+        elif(currency == "EUR"):
+            exchangeRateEURPLN = getExchangeRateFromToday('eur')
+            amount *= exchangeRateEURPLN
+            amount /= exchangeRate
+        elif(currency == "USD"):
+            exchangeRateUSDPLN = getExchangeRateFromToday('usd')
+            amount *= exchangeRateUSDPLN
+            amount /= exchangeRate
+        else:
+            exchangeRateGPBPLN = getExchangeRateFromToday('gbp')
+            amount *= exchangeRateGPBPLN
+            amount /= exchangeRate
+        amount = round(amount,2)
     curremtPayment = {
-        "amount": amount,
+        "amount": basicAmount,
         "date": formattedDate,
         "currency": currency,
         "id": str(uuid.uuid4())
@@ -53,7 +75,34 @@ def newPayment(invoice):
     invoice["toPay"] -= amount
     if(invoice["toPay"] == 0):
         invoices.remove(invoice) 
-    
+
+def getExchangeRateFromToday(currency):
+    url = f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        exchangeRate = data["rates"][0]["mid"]
+        return exchangeRate
+    else:
+        print(f"Request failed with status code: {response.status_code}")
+
+def getExchangeRateFromDate(currency,date):
+    url = f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{date}/"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        exchangeRate = data["rates"][0]["mid"]
+        return exchangeRate
+    else:
+        print(f"Request failed with status code: {response.status_code}")    
+
+def isValidDate(date_str, date_format='%d-%m-%Y'):
+    try:
+        datetime.strptime(date_str, date_format)
+        return True
+    except ValueError:
+        return False
+
 startProgram = True
 while (startProgram==True):
     print('What do you want to do?:')
@@ -80,26 +129,7 @@ while (startProgram==True):
                 newPayment(findedInvoice)
                 print(payments)
 
-def getExchangeRateFromToday(currency):
-    url = f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        exchangeRate = data["rates"][0]["mid"]
-        return exchangeRate
-    else:
-        print(f"Request failed with status code: {response.status_code}")
 
-
-def getExchangeRateFromDate(currency,date):
-    url = f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{date}/"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        exchangeRate = data["rates"][0]["mid"]
-        return exchangeRate
-    else:
-        print(f"Request failed with status code: {response.status_code}")
 
 
 
