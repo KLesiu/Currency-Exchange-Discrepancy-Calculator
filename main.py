@@ -1,5 +1,6 @@
 from datetime import datetime
 import uuid
+import requests
 invoices = []
 payments = []
 
@@ -78,6 +79,27 @@ while (startProgram==True):
                 print(findedInvoice)
                 newPayment(findedInvoice)
                 print(payments)
+
+def getExchangeRateFromToday(currency):
+    url = f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        exchangeRate = data["rates"][0]["mid"]
+        return exchangeRate
+    else:
+        print(f"Request failed with status code: {response.status_code}")
+
+
+def getExchangeRateFromDate(currency,date):
+    url = f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{date}/"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        exchangeRate = data["rates"][0]["mid"]
+        return exchangeRate
+    else:
+        print(f"Request failed with status code: {response.status_code}")
 
 
 
