@@ -103,11 +103,21 @@ def isValidDate(date_str, date_format='%d-%m-%Y'):
     except ValueError:
         return False
 
+def paymentSummary(invoice):
+    invoiceState = invoice["toPay"]
+    invoiceState = round(invoiceState,2)
+    if(invoiceState > 0):
+        print(f"You have to pay {invoiceState}")
+    else:
+        print(f"You have {-invoiceState} excess payment")
+
+
 startProgram = True
 while (startProgram==True):
     print('What do you want to do?:')
     print('- Add new invoice (Enter number 1)')
     print('- Add new payment (Enter number 2)')
+    print('- Check invoice (Enter number 3)')
     print('If you want to close program (Enter number 10)')
     choice = input("Your choice:")
     if(choice == '10'):
@@ -125,9 +135,22 @@ while (startProgram==True):
             if(findedInvoice == None):
                 print("We dont have invoice with given id")
             else:
-                print(findedInvoice)
                 newPayment(findedInvoice)
                 print(payments)
+    if(choice == '3'):
+        if(len(invoices)==0):
+            print("You dont have invoices!")
+        else:
+            print("Which invoice do you want to check?" )
+            print(invoices)
+            invoiceChoice = input("Choice (enter id): ")
+            findedInvoice = next((invoice for invoice in invoices if invoice["id"] == invoiceChoice), None)
+            if(findedInvoice == None):
+                print("We dont have invoice with given id")
+            else:
+                paymentSummary(findedInvoice)
+
+
 
 
 
