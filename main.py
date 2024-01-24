@@ -48,31 +48,45 @@ def newPayment(invoice):
         return print("Unvalid currency (PLN,USD,GBP,EUR)")
     formattedDate = date.strftime("%d-%m-%Y")
     invoiceCurrency = invoice['currency']
-    exchangeRate = getExchangeRateFromToday(invoiceCurrency)
-    if(currency != invoiceCurrency):
-        if(currency == 'PLN'):
-            amount /= exchangeRate
-        elif(currency == "EUR"):
-            exchangeRateEURPLN = getExchangeRateFromToday('eur')
-            amount *= exchangeRateEURPLN
-            amount /= exchangeRate
-        elif(currency == "USD"):
-            exchangeRateUSDPLN = getExchangeRateFromToday('usd')
-            amount *= exchangeRateUSDPLN
-            amount /= exchangeRate
-        else:
-            exchangeRateGPBPLN = getExchangeRateFromToday('gbp')
-            amount *= exchangeRateGPBPLN
-            amount /= exchangeRate
-        amount = round(amount,2)
-    curremtPayment = {
+    if(invoiceCurrency == "PLN"):
+        if(currency != invoiceCurrency):
+            if(currency == "EUR"):
+                exchangeRateEURPLN = getExchangeRateFromToday('eur')
+                amount *= exchangeRateEURPLN
+            elif(currency == "USD"):
+                exchangeRateUSDPLN = getExchangeRateFromToday('usd')
+                amount *= exchangeRateUSDPLN
+            elif(currency == "GBP"):
+                exchangeRateGPBPLN = getExchangeRateFromToday('gbp')
+                amount *= exchangeRateGPBPLN
+            amount = round(amount,2)
+    else:
+        exchangeRate = getExchangeRateFromToday(invoiceCurrency)
+        if(currency != invoiceCurrency):
+            if(currency == 'PLN'):
+                amount /= exchangeRate
+            elif(currency == "EUR"):
+                exchangeRateEURPLN = getExchangeRateFromToday('eur')
+                amount *= exchangeRateEURPLN
+                amount /= exchangeRate
+            elif(currency == "USD"):
+                exchangeRateUSDPLN = getExchangeRateFromToday('usd')
+                amount *= exchangeRateUSDPLN
+                amount /= exchangeRate
+            else:
+                exchangeRateGPBPLN = getExchangeRateFromToday('gbp')
+                amount *= exchangeRateGPBPLN
+                amount /= exchangeRate
+            amount = round(amount,2)
+    currentPayment = {
         "amount": basicAmount,
         "date": formattedDate,
         "currency": currency,
-        "id": str(uuid.uuid4())
+        "id": str(uuid.uuid4()),
+        "invoiceId": invoice["id"]
     }
-    print(curremtPayment)
-    payments.append(curremtPayment)
+    print(currentPayment)
+    payments.append(currentPayment)
     invoice["toPay"] -= amount
     if(invoice["toPay"] == 0):
         invoices.remove(invoice) 
@@ -151,19 +165,65 @@ def openFilePayments(filePath):
                         return print(f"This is not number in line {line}")
                     if(data[3] !="PLN" and data[3] !="USD" and data[3] !="GBP" and data[3] !="EUR"):
                         return print(f"Unvalid currency (PLN,USD,GBP,EUR) in line {line}")
-                    transactionData = {
-                        'amount': int(data[1]),
-                        'currency': data[3],
-                        'id': str(uuid.uuid4())
-                    }
                     findedInvoice = next((invoice for invoice in invoices if invoice['id']  == data[5]), None)
-                    payments.append(transactionData)
-                    findedInvoice["toPay"] -= transactionData["amount"]
-                    if(findedInvoice["toPay"] == 0):
-                        invoices.remove(findedInvoice)
-                        print(f"Invoice closed {findedInvoice['id']}")
+                    if(findedInvoice == None):
+                        print("We dont have invoice with given id")
+                    else:
+                        basicAmount = int(data[1])
+                        amount = int(data[1])
+                        if(findedInvoice["currency"] == "PLN"):
+                            if(data[3] != findedInvoice["currency"]):
+                                amount = int(data[1])
+                                if(data[3] == "EUR"):
+                                    exchangeRateEURPLN = getExchangeRateFromToday('eur')
+                                    amount *= exchangeRateEURPLN
+                                elif(data[3] == "USD"):
+                                    exchangeRateUSDPLN = getExchangeRateFromToday('usd')
+                                    amount *= exchangeRateUSDPLN
+                                elif(data[3] == "GBP"):
+                                    exchangeRateGPBPLN = getExchangeRateFromToday('gbp')
+                                    amount *= exchangeRateGPBPLN
+                                amount = round(amount,2)
+                        else:
+                            if(data[3] != findedInvoice["currency"]):
+                                exchangeRate = getExchangeRateFromToday(findedInvoice["currency"])
+                                amount = int(data[1])
+                                if(data[3] == 'PLN'):
+                                    amount /= exchangeRate
+                                elif(data[3] == "EUR"):
+                                    exchangeRateEURPLN = getExchangeRateFromToday('eur')
+                                    amount *= exchangeRateEURPLN
+                                    amount /= exchangeRate
+                                elif(data[3] == "USD"):
+                                    exchangeRateUSDPLN = getExchangeRateFromToday('usd')
+                                    amount *= exchangeRateUSDPLN
+                                    amount /= exchangeRate
+                                else:
+                                    exchangeRateGPBPLN = getExchangeRateFromToday('gbp')
+                                    amount *= exchangeRateGPBPLN
+                                    amount /= exchangeRate
+                                amount = round(amount,2)
+                        date = datetime.now()
+                        formattedDate = date.strftime("%d-%m-%Y")
+                        transactionData = {
+                            'amount': basicAmount,
+                            'currency': data[3],
+                            'id': str(uuid.uuid4()),
+                            "date": formattedDate,
+                            "invoiceId": data[5]
+                        }
+                        payments.append(transactionData)
+                        findedInvoice["toPay"] -= amount
+                        findedInvoice["toPay"] = round(findedInvoice["toPay"],2)
+                        if(findedInvoice["toPay"] == 0):
+                            invoices.remove(findedInvoice)
+                            print(f"Invoice closed {findedInvoice['id']}")
     except:
         print('Incorrect file path')
+
+def calculateExchangeRateDifferences(invoice,paymentsForInvoice):
+    print(paymentsForInvoice)
+
 
 startProgram = True
 while (startProgram==True):
@@ -173,6 +233,7 @@ while (startProgram==True):
     print('- Check invoice (Enter number 3)')
     print('- Add new invoice from file (Enter number 4)')
     print('- Add new payment from file (Enter number 5)')
+    print('- Check exchange rate differences in invoice (Enter number 6)')
     print('If you want to close program (Enter number 10)')
     choice = input("Your choice:")
     if(choice == '10'):
@@ -212,7 +273,20 @@ while (startProgram==True):
         print('File must have a structure: (Kwota: 400 Waluta: EUR  FakturaId: iodjaio76f12osfiosholfjnoilh )')
         paymentPath = input("Enter payment path: ")
         openFilePayments(paymentPath)
-
+    if(choice == '6'):
+        if(len(invoices)==0):
+            print("You dont have invoices!")
+        else:
+            print("Which invoice do you want to check?" )
+            print(invoices)
+            print(payments)
+            invoiceChoice = input("Choice (enter id): ")
+            findedInvoice = next((invoice for invoice in invoices if invoice["id"] == invoiceChoice), None)
+            if(findedInvoice == None):
+                print("We dont have invoice with given id")
+            else:
+                paymentsForInvoice = [payment for payment in payments if payment["invoiceId"] == invoiceChoice]
+                calculateExchangeRateDifferences(findedInvoice,paymentsForInvoice)
 
 
 
