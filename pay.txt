@@ -1,1 +1,1 @@
-Kwota: 400 Waluta: USD FakturaId: 3b9fa2a9-6311-44b9-bf13-debe1297ce1f
+Kwota: 3000 Waluta: PLN FakturaId: f02400e3-f558-4b93-8532-4e03e8e6b13e
