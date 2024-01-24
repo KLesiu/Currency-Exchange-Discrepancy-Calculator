@@ -151,17 +151,39 @@ def openFilePayments(filePath):
                         return print(f"This is not number in line {line}")
                     if(data[3] !="PLN" and data[3] !="USD" and data[3] !="GBP" and data[3] !="EUR"):
                         return print(f"Unvalid currency (PLN,USD,GBP,EUR) in line {line}")
-                    transactionData = {
-                        'amount': int(data[1]),
-                        'currency': data[3],
-                        'id': str(uuid.uuid4())
-                    }
                     findedInvoice = next((invoice for invoice in invoices if invoice['id']  == data[5]), None)
-                    payments.append(transactionData)
-                    findedInvoice["toPay"] -= transactionData["amount"]
-                    if(findedInvoice["toPay"] == 0):
-                        invoices.remove(findedInvoice)
-                        print(f"Invoice closed {findedInvoice['id']}")
+                    if(findedInvoice == None):
+                        print("We dont have invoice with given id")
+                    else: 
+                        if(data[3] != findedInvoice["currency"]):
+                            exchangeRate = getExchangeRateFromToday(findedInvoice["currency"])
+                            amount = int(data[1])
+                            if(data[3] == 'PLN'):
+                                amount /= exchangeRate
+                            elif(data[3] == "EUR"):
+                                exchangeRateEURPLN = getExchangeRateFromToday('eur')
+                                amount *= exchangeRateEURPLN
+                                amount /= exchangeRate
+                            elif(data[3] == "USD"):
+                                exchangeRateUSDPLN = getExchangeRateFromToday('usd')
+                                amount *= exchangeRateUSDPLN
+                                amount /= exchangeRate
+                            else:
+                                exchangeRateGPBPLN = getExchangeRateFromToday('gbp')
+                                amount *= exchangeRateGPBPLN
+                                amount /= exchangeRate
+                            amount = round(amount,2)
+                        transactionData = {
+                            'amount': amount,
+                            'currency': data[3],
+                            'id': str(uuid.uuid4())
+                        }
+                        payments.append(transactionData)
+                        findedInvoice["toPay"] -= transactionData["amount"]
+                        findedInvoice["toPay"] = round(findedInvoice["toPay",2])
+                        if(findedInvoice["toPay"] == 0):
+                            invoices.remove(findedInvoice)
+                            print(f"Invoice closed {findedInvoice['id']}")
     except:
         print('Incorrect file path')
 
