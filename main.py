@@ -4,6 +4,7 @@ import requests
 invoices = []
 payments = []
 
+
 def newInvoice():
     print("Invoice")
     amount =  input("Amount:")
@@ -75,6 +76,7 @@ def newPayment(invoice):
     invoice["toPay"] -= amount
     if(invoice["toPay"] == 0):
         invoices.remove(invoice) 
+        print(f"Invoice closed {invoice['id']} ")
 
 def getExchangeRateFromToday(currency):
     url = f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/"
@@ -111,6 +113,57 @@ def paymentSummary(invoice):
     else:
         print(f"You have {-invoiceState} excess payment")
 
+def openFileInvoices(filePath):
+    try:
+        with open(filePath, 'r') as file:
+            for line in file:
+                data = line.strip().split(' ')
+                try:
+                    int(data[1])
+                except:
+                    return print(f"This is not number in line {line}")
+                if(data[3] !="PLN" and data[3] !="USD" and data[3] !="GBP" and data[3] !="EUR"):
+                    return print(f"Unvalid currency (PLN,USD,GBP,EUR) in line {line}")
+                isDateCorrect = isValidDate(data[5])
+                if(isDateCorrect == False):
+                    return print(f"Unvalid date type. Enter date with (%d-%m-%Y) type in line {line}")
+                transactionData = {
+                    'amount': int(data[1]),
+                    'currency': data[3],
+                    'date': data[5],
+                    'toPay': int(data[1]),
+                    'id': str(uuid.uuid4())
+                }
+                invoices.append(transactionData)
+                
+    except:
+        print('Incorrect file path')
+    print(invoices)
+
+def openFilePayments(filePath):
+    try:
+        with open(filePath, 'r') as file:
+                for line in file:
+                    data = line.strip().split(' ')
+                    try:
+                        int(data[1])
+                    except:
+                        return print(f"This is not number in line {line}")
+                    if(data[3] !="PLN" and data[3] !="USD" and data[3] !="GBP" and data[3] !="EUR"):
+                        return print(f"Unvalid currency (PLN,USD,GBP,EUR) in line {line}")
+                    transactionData = {
+                        'amount': int(data[1]),
+                        'currency': data[3],
+                        'id': str(uuid.uuid4())
+                    }
+                    findedInvoice = next((invoice for invoice in invoices if invoice['id']  == data[5]), None)
+                    payments.append(transactionData)
+                    findedInvoice["toPay"] -= transactionData["amount"]
+                    if(findedInvoice["toPay"] == 0):
+                        invoices.remove(findedInvoice)
+                        print(f"Invoice closed {findedInvoice['id']}")
+    except:
+        print('Incorrect file path')
 
 startProgram = True
 while (startProgram==True):
@@ -118,6 +171,8 @@ while (startProgram==True):
     print('- Add new invoice (Enter number 1)')
     print('- Add new payment (Enter number 2)')
     print('- Check invoice (Enter number 3)')
+    print('- Add new invoice from file (Enter number 4)')
+    print('- Add new payment from file (Enter number 5)')
     print('If you want to close program (Enter number 10)')
     choice = input("Your choice:")
     if(choice == '10'):
@@ -149,6 +204,14 @@ while (startProgram==True):
                 print("We dont have invoice with given id")
             else:
                 paymentSummary(findedInvoice)
+    if(choice == '4'):
+        print('File must have a structure: (Kwota: 400 Waluta: EUR Data: 22-01-2004) if you want to add more invoices, enter next in new line')
+        invoicePath = input("Enter invoice path: ")
+        openFileInvoices(invoicePath)
+    if(choice == '5'):
+        print('File must have a structure: (Kwota: 400 Waluta: EUR  FakturaId: iodjaio76f12osfiosholfjnoilh )')
+        paymentPath = input("Enter payment path: ")
+        openFilePayments(paymentPath)
 
 
 
