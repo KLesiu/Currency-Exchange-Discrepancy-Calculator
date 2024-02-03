@@ -223,6 +223,34 @@ def openFilePayments(filePath):
 
 def calculateExchangeRateDifferences(invoice,paymentsForInvoice):
     print(paymentsForInvoice)
+    invoiceDate = invoice['date']
+    paymentDates = []
+    for payment in paymentsForInvoice:
+        paymentDates.append(payment['date'])
+    print(invoiceDate)
+    print (paymentDates)
+    
+def saveToTheFile(fileName, data):
+    try:
+        with open(fileName, 'w+') as file:
+            file.write(data)
+        print(f'Data has been saved to the file: {fileName}')
+    except Exception as e:
+        print(f'Error during data seve: {e}')
+
+def saveInvoiceToTheFIle(invoice,paymentsForInvoice):
+    invoiceData = f'id: {invoice["id"]}, amount: {invoice["amount"]}, date: {invoice["date"]}, currency: {invoice["currency"]}, toPay: {invoice["toPay"]}'
+    data = f'Invoice: {invoiceData} \n Payments: \n'
+    for payment in paymentsForInvoice:
+        paymentData = f'id: {payment["id"]}, amount: {payment["amount"]}, date: {payment["date"]}, currency: {payment["currency"]}'
+        data += f'{paymentData} \n'
+    fileName = input('Enter file name: ')
+    saveToTheFile(fileName, data)
+
+        
+    
+
+
 
 
 startProgram = True
@@ -234,13 +262,14 @@ while (startProgram==True):
     print('- Add new invoice from file (Enter number 4)')
     print('- Add new payment from file (Enter number 5)')
     print('- Check exchange rate differences in invoice (Enter number 6)')
+    print('- Save invoice data to the file (Enter number 7) ')
     print('If you want to close program (Enter number 10)')
     choice = input("Your choice:")
-    if(choice == '10'):
+    if choice == '10':
         startProgram = False
-    if(choice == '1'):
+    if choice == '1':
         newInvoice()
-    if(choice == '2'):
+    if choice == '2':
         if(len(invoices)==0):
             print("You dont have invoices!")
         else:
@@ -253,7 +282,7 @@ while (startProgram==True):
             else:
                 newPayment(findedInvoice)
                 print(payments)
-    if(choice == '3'):
+    if choice == '3':
         if(len(invoices)==0):
             print("You dont have invoices!")
         else:
@@ -265,15 +294,15 @@ while (startProgram==True):
                 print("We dont have invoice with given id")
             else:
                 paymentSummary(findedInvoice)
-    if(choice == '4'):
+    if choice == '4':
         print('File must have a structure: (Kwota: 400 Waluta: EUR Data: 22-01-2004) if you want to add more invoices, enter next in new line')
         invoicePath = input("Enter invoice path: ")
         openFileInvoices(invoicePath)
-    if(choice == '5'):
+    if choice == '5':
         print('File must have a structure: (Kwota: 400 Waluta: EUR  FakturaId: iodjaio76f12osfiosholfjnoilh )')
         paymentPath = input("Enter payment path: ")
         openFilePayments(paymentPath)
-    if(choice == '6'):
+    if choice == '6':
         if(len(invoices)==0):
             print("You dont have invoices!")
         else:
@@ -287,6 +316,28 @@ while (startProgram==True):
             else:
                 paymentsForInvoice = [payment for payment in payments if payment["invoiceId"] == invoiceChoice]
                 calculateExchangeRateDifferences(findedInvoice,paymentsForInvoice)
+
+    if choice == '7':
+        if(len(invoices)==0):
+            print("You dont have invoices!")
+        else:
+            print("Which invoice do you want to save to the file?" )
+            print(invoices)
+            print(payments)
+            invoiceChoice = input("Choice (enter id): ")
+            findedInvoice = next((invoice for invoice in invoices if invoice["id"] == invoiceChoice), None)
+            if(findedInvoice == None):
+                print("We dont have invoice with given id")
+            else:
+                paymentsForInvoice = [payment for payment in payments if payment["invoiceId"] == invoiceChoice]
+                saveInvoiceToTheFIle(findedInvoice,paymentsForInvoice)
+
+    
+        
+        
+
+    
+
 
 
 

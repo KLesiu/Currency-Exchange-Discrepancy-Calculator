@@ -1,0 +1,4 @@
+Invoice: id: d33a1911-b5ab-422a-95c4-3cdf91d53b96, amount: 11111, date: 01-01-2024, currency: PLN, toPay: 9562.34 
+ Payments: 
+id: c5843f94-c4c1-484b-ad50-b4ebeb1de1ab, amount: 333, date: 03-02-2024, currency: EUR 
+id: b31de56d-2904-4478-b245-be9d0bef0d65, amount: 111, date: 03-02-2024, currency: PLN 
