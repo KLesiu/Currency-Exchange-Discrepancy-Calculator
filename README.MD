@@ -102,5 +102,11 @@ python main.py
 Program zawiera mechanizmy zabezpieczające przed błędnym wprowadzeniem danych, na przykład sprawdzanie poprawności daty, waluty
 
 
+# Pliki wsadowe
+## Dla faktur
+ - File must have a structure: (Kwota: 400 Waluta: EUR Data: 22-01-2004)
+## Dla płatności
+ - File must have a structure: (Kwota: 400 Waluta: EUR  FakturaId: iodjaio76f12osfiosholfjnoilh )
+
 
 
