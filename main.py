@@ -103,6 +103,9 @@ def getExchangeRateFromToday(currency):
         print(f"Request failed with status code: {response.status_code}")
 
 def getExchangeRateFromDate(currency,date):
+    
+    date = datetime.strptime(date, "%d-%m-%Y")
+    date = date.strftime("%Y-%m-%d")
     url = f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{date}/"
     response = requests.get(url)
     if response.status_code == 200:
@@ -222,13 +225,20 @@ def openFilePayments(filePath):
         print('Incorrect file path')
 
 def calculateExchangeRateDifferences(invoice,paymentsForInvoice):
-    print(paymentsForInvoice)
     invoiceDate = invoice['date']
-    paymentDates = []
+    
     for payment in paymentsForInvoice:
-        paymentDates.append(payment['date'])
-    print(invoiceDate)
-    print (paymentDates)
+        if(invoice["currency"] != "PLN"):
+            if(payment["currency"] == invoice["currency"]):
+                print("Exchange rate difference: 0")
+            else:
+                exchangeRatePayment = getExchangeRateFromDate(invoice["currency"],payment["date"])
+                exchangeRateInvoice = getExchangeRateFromDate(invoice["currency"],invoiceDate)
+                result = float(exchangeRateInvoice) - float(exchangeRatePayment)
+                print(f" \n Exchange rate {invoice['currency']} on the day of invoice issue:: {exchangeRateInvoice}PLN \n  Exchange rate on the day of the payment: {exchangeRatePayment}PLN \n  Result: {result}")
+        else:
+            print("No data")
+    
 
 def saveToTheFile(fileName, data):
     try:
@@ -303,7 +313,6 @@ while (startProgram==True):
         else:
             print("Which invoice do you want to check?" )
             print(invoices)
-            print(payments)
             invoiceChoice = input("Choice (enter id): ")
             findedInvoice = next((invoice for invoice in invoices if invoice["id"] == invoiceChoice), None)
             if(findedInvoice == None):
@@ -311,7 +320,7 @@ while (startProgram==True):
             else:
                 paymentsForInvoice = [payment for payment in payments if payment["invoiceId"] == invoiceChoice]
                 calculateExchangeRateDifferences(findedInvoice,paymentsForInvoice)
-    if choice == '7':
+    if (choice == '7'):
         if(len(invoices)==0):
             print("You dont have invoices!")
         else:
